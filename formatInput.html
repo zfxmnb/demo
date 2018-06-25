@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>formatInput</title>
+</head>
+
+<body>
+    <input type="text" id="formatinput">
+    <script>
+        function FormatInput(target, seg, digit) {
+            this.seg = seg;
+            this.digit = digit;
+            this.target = target;
+            this.removePatt = new RegExp("\\"+seg, 'g');
+            this.replacePatt = new RegExp('(.{' + digit + '})(?=.)', 'g');
+            this.value = "";
+            this.formatValue = "";
+            var _this = this;
+            input.addEventListener("click", function () {
+                _this.formatBefore();
+                _this.formatAfter();
+            }, false)
+        }
+        FormatInput.prototype.formatBefore = function () {
+            var realStart = this.target.value.substring(0, this.target.selectionStart || 0).replace(this.removePatt, '').length;
+            this.start = realStart + (parseInt((realStart - 1) / this.digit));
+        }
+        FormatInput.prototype.formatAfter = function () {
+            this.target.setSelectionRange(this.start, this.start)
+        }
+        FormatInput.prototype.format = function (callback) {
+            this.formatBefore();
+            this.value = this.target.value.replace(this.removePatt, '');
+            this.formatValue = this.value.replace(this.replacePatt, '$1' + this.seg);
+            var _this = this;
+            callback.call(this, this.formatValue, function(){
+                _this.formatAfter();
+            });
+            this.formatAfter();
+        }
+
+
+        var input = document.getElementById('formatinput');
+        var formatFn = new FormatInput(input, " ", 4)
+        input.oninput = function () {
+            formatFn.format(function (str, afterFn) {
+                // setTimeout(function(){
+                //     input.value = str;
+                //     afterFn();
+                // },30);
+                input.value = this.formatValue;
+            })
+        }
+    </script>
+</body>
+
+</html>

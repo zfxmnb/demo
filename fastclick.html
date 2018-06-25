@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        div {
+            height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+
+    </div>
+    <script>
+        document.body.addEventListener("click", function () {
+            console.log("click")
+        })
+        document.querySelector("div").addEventListener("touchend", function (e) {
+            e.preventDefault();
+            triggerEvent(document.body, event);
+        })
+
+        function triggerEvent(targetElement, event) {
+            var touch = event.changedTouches[0];
+            // 创建一个鼠标事件
+            clickEvent = document.createEvent('MouseEvents');
+            // 初始化鼠标事件为click事件
+            clickEvent.initMouseEvent(
+                'click',
+                true,//bubble（布尔值）：是否冒泡；
+                true,//cancelable（布尔值）：是否可取消；
+                document.defaultView,//与事件关联的视图，一般为document.defaultView
+                1,//detail（整数）：一般为0，一般只有事件处理程序使用；
+                touch.screenX,
+                touch.screenY,
+                touch.clientX,
+                touch.clientY,
+                false,// ctrlKey（布尔值）：是否按下了Ctrl键，默认为false；
+                false,//altKey（布尔值）；
+                false,//shiftKey（布尔值）；
+                false,//metaKey（布尔值）；
+                0,//button（整数）：表示按下了哪个鼠标键，默认为0；
+                null//表示与事件相关的对象。一般只有在模拟mouseover与mouseout时使用。
+            );
+            // 在目标元素上触发该鼠标事件，
+            targetElement.dispatchEvent(clickEvent);
+        }
+    </script>
+</body>
+
+</html>

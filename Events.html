@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>event</title>
+    <style>
+        #div1 {
+            width: 200px;
+            height: 200px;
+            background: green;
+        }
+
+        .div2 {
+            width: 100px;
+            height: 100px;
+            background: #fff;
+        }
+
+        p {
+            background: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        function delegation(ele) {
+            var events = {};//记录事件
+            ele.delegation = function (selectorStr, event, callback) {
+                var selectors = selectorStr.split(/\s+/).map(function (selector) {
+                    var arr = selector.match(/(\.|\#)?(\w|\-)+(?=\.|\#)?/g).map(function (item) {
+                        var first = item.charAt(0),
+                            obj = {};
+                        switch (first) {
+                            case "#":
+                                obj.type = "id";
+                                obj.selectStr = item.substr(1);
+                                break;
+                            case ".":
+                                obj.type = "class";
+                                obj.selectStr = item.substr(1);
+                                break;
+                            default:
+                                obj.type = "tag";
+                                obj.selectStr = item.toUpperCase();
+                        }
+                        return obj
+                    })
+                    return arr
+                });
+                if (events[event]) {
+                    events[event].push({
+                        selectorStr: selectorStr.replace(/\s+/g, ''),
+                        selectors: selectors,
+                        callback: callback,
+                        type: event
+                    })
+                } else {
+                    events[event] = [{
+                        selectorStr: selectorStr.replace(/\s+/g, ''),
+                        selectors: selectors,
+                        callback: callback,
+                        type: event
+                    }];
+                    (ele || document.body).addEventListener(event, function (e) {
+                        var targetInfo = bubble(e);
+                        for (var i = 0; i < events[event].length; i++) {
+                            var item = events[event][i];
+                            var delegationEvent = e.target._delegationEvents && (e.target._delegationEvents[
+                                item.type + "_" + item.selectorStr]);
+                            if (delegationEvent) {
+                                for (var j = 0; j < delegationEvent.length; j++) {
+                                    delegationEvent[j].callback.call(delegationEvent[j]._this, e);
+                                }
+                            } else {
+                                var times = new Date().getTime();
+                                execute(e, item, targetInfo, function (info) {
+                                    var key = info.type + "_" + info.selectorStr;
+                                    e.target._delegationEvents = (e.target._delegationEvents || {});
+                                    if (e.target._delegationEvents[key]) {
+                                        e.target._delegationEvents[key].push({
+                                            callback: info.callback,
+                                            _this: this
+                                        })
+                                    } else {
+                                        e.target._delegationEvents[key] = [{
+                                            callback: info.callback,
+                                            _this: this
+                                        }]
+                                    };
+                                });
+                                console.log(new Date().getTime() - times);
+                            }
+                        }
+                    }, false)
+                }
+            }
+            //执行事件元素层级匹配
+            function execute(e, item, targetInfo, callback) {
+                var temp = 0,
+                    index = 0,
+                    _this = undefined;
+                var selectors = item.selectors;
+                for (var j = selectors.length - 1; j > -1; j--) {
+                    var selector = selectors[j];
+                    for (var k = index; k < targetInfo.length; k++) {
+                        if (matching(targetInfo[k], selector)) {
+                            temp++;
+                            index = k + 1;
+                            if (!_this) {
+                                _this = targetInfo[k].HTMLObject;
+                            }
+                            break;
+                        }
+                    }
+                    if (temp === selectors.length) {
+                        item.callback.call(_this, e);
+                        callback.call(_this, item);
+                        break;
+                    }
+                }
+            }
+            //点击事件冒泡获取层级元素
+            function bubble(e) {
+                var targetInfo = [];
+                var target = e.target;
+                while (target.tagName !== "HTML") {
+                    targetInfo.push({
+                        "id": target.id,
+                        "class": target.className.split(/\s+/),
+                        "tag": target.tagName,
+                        "HTMLObject": target
+                    });
+                    target = target.parentNode;
+                }
+                return targetInfo;
+            }
+            //匹配选择器
+            function matching(targetInfo, selectArr) {
+                var k = 0;
+                for (var i = 0; i < selectArr.length; i++) {
+                    if (selectArr[i].type === "class") {
+                        if (targetInfo[selectArr[i].type].indexOf(selectArr[i].selectStr) > -1) {
+                            k++;
+                        }
+                    } else {
+                        if (targetInfo[selectArr[i].type] === selectArr[i].selectStr) {
+                            k++;
+                        }
+                    }
+                }
+                return k === selectArr.length;
+            }
+        }
+        delegation(document.body);
+        document.body.delegation("body div#div1 div.div2", 'click', function (event) {
+            console.log(this, event)
+        })
+    </script>
+    <div id="div1">
+        <div class="div2 div">
+            <p>123132</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>cvsSplit</title>
+</head>
+
+<body>
+    <img src="" id="img" alt="">
+    <script>
+        var configs = {
+            img: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png",
+            width: 300,
+            height: 300,
+            position: ["center"],
+            size: ['contain'],
+            quality: 1,
+            bgcolor:"rgba(255,255,255,.5)",
+            callback: function (result) {
+                document.querySelector('#img').src = result;
+            }
+        }
+        new cvsSplit(configs);
+
+        function cvsSplit(configs) {
+            if (typeof configs.img === 'string') {
+                var url = configs.img;
+            } else {
+                var url = configs.img.src;
+            }
+            var image = document.createElement('img'),
+                _this = this;
+            image.crossOrigin = "anonymous";
+            image.onload = function () {
+                var canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d');
+                _this.calculate();
+                canvas.width = configs.width;
+                canvas.height = configs.height;
+                var type = 'image/png';
+                if (configs.quality < 1) {
+                    configs.bgcolor = configs.bgcolor || "#fff"
+                    type = 'image/jpeg';
+                }
+                if(configs.bgcolor){
+                    ctx.fillStyle = configs.bgcolor;
+                    ctx.fillRect(0, 0, configs.width, configs.height);
+                }
+                ctx.drawImage(image, configs.position[0], configs.position[1], configs.size[0], configs.size[1]);
+                configs.callback && configs.callback(canvas.toDataURL(type, configs.quality));
+                canvas.remove();
+            }
+            image.src = url;
+            this.configs = configs;
+            this.image = image;
+        }
+        cvsSplit.prototype.calculate = function () {
+            var c = this.configs;
+            c.width = c.width || this.image.width;
+            c.height = c.height || this.image.height;
+            c.quality = c.quality || 1;
+            this.setSize();
+            this.setPosition();
+        }
+        cvsSplit.prototype.setPosition = function () {
+            var c = this.configs;
+            if (c.position && Object.prototype.toString.call(c.position) === "[object Array]" &&
+                c.position.length > 0) {
+                c.position[1] = c.position[1] || "center";
+                if (typeof c.position[0] === 'string') {
+                    switch (c.position[0]) {
+                        case 'left':
+                            c.position[0] = 0;
+                            break;
+                        case 'center':
+                            c.position[0] = (c.width - c.size[0]) / 2;
+                            break;
+                        case 'right':
+                            c.position[0] = c.width - c.size[0];
+                            break;
+                        default:
+                            c.position[0] = c.position[0].split("%")[0] / 100 * c.width ||
+                                (
+                                    c.width - c.size[0]) / 2;
+                    }
+                }
+                if (typeof c.position[1] === 'string') {
+                    switch (c.position[1]) {
+                        case 'top':
+                            c.position[1] = 0;
+                            break;
+                        case 'center':
+                            c.position[1] = (c.height - c.size[1]) / 2;
+                            break;
+                        case 'bottom':
+                            c.position[1] = c.height - c.size[1];
+                            break;
+                        default:
+                            c.position[1] = c.position[1].split("%")[0] / 100 * c.height ||
+                                (
+                                    c.height - c.size[1]) / 2;
+                    }
+                }
+            } else {
+                c.position = [(c.width - c.size[0]) / 2, (c.height -
+                    c.size[1]) / 2];
+            }
+        }
+        cvsSplit.prototype.setSize = function () {
+            var c = this.configs;
+            if (c.size && Object.prototype.toString.call(c.size) === "[object Array]" && this
+                .configs.size.length >
+                0) {
+                if (c.size[0] === "cover" || c.size[0] === "contain") {
+                    var cover = c.size[0] === "cover",
+                        widthRate = this.image.width / c.width,
+                        heightRate = this.image.height / c.height;
+                    if (cover ? widthRate < heightRate : widthRate > heightRate) {
+                        c.size[0] = c.width;
+                        c.size[1] = this.image.height / widthRate
+                    } else {
+                        c.size[0] = this.image.width / heightRate;
+                        c.size[1] = c.height;
+                    }
+                } else {
+                    if (typeof c.size[0] === "string") {
+                        c.size[0] = c.size[0].split("%")[0] / 100 * this.image.width || this.image
+                            .width;
+                    } else {
+                        c.size[0] = c.size[0] || this.image.width;
+                    }
+                    if (typeof c.size[1] === "string") {
+                        c.size[1] = c.size[1].split("%")[0] / 100 * this.image.height || this
+                            .configs.size[0] /
+                            this.image.width * this.image.height;
+                    } else {
+                        c.size[1] = c.size[1] || c.size[0] / this.image.width *
+                            this.image.height
+                    }
+                }
+            } else {
+                c.size = [c.width, c.height];
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>正在打开应用...</title>
+    <style>
+        iframe{
+            height:0;
+            visibility: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        window.onload = function(){
+            function getUrlParam(param_name) {
+                const urlReg = new RegExp("(^|&)" + param_name + "=([^&]*)(&|$)");
+                const result = window && window.location.search.substr(1).match(urlReg);
+                if (result) {
+                    return unescape(result[2]);
+                }
+                return null;
+            }
+            var iframe = document.createElement('iframe'),
+                scheme = getUrlParam("scheme")||"";
+            iframe.src = scheme;
+            document.body.appendChild(iframe);
+            let timer = setTimeout(function () {
+                document.body.removeChild(iframe);
+                location.href = scheme;
+                setTimeout(function(){
+                    history.go(-1);
+                },300)
+            }, 300)
+            iframe.onabort = iframe.onerror = iframe.onload = function () {
+                document.body.removeChild(iframe);
+                clearTimeout(timer);
+            }
+        }
+    </script>
+</body>
+
+</html>

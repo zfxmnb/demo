@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>validate</title>
+</head>
+
+<body>
+    <input type="text" id="input">
+    <script>
+        //深度克隆
+        function clone(cloneObj) {
+            var newObj = {}
+            for (var key in cloneObj) {
+                newObj[key] = cloneObj[key];
+            }
+            return newObj;
+        }
+        Object.assign = Object.assign || function (param1, param2) {
+            var p1 = clone(param1),
+                p2 = clone(param2);
+            for (var key in param2) {
+                p1[key] = p2[key]
+            }
+            return p1
+        }
+        var validateMsgs = {},
+            validateTypes = {
+                noEmpty: function (value) {
+                    return value != null && value.length > 0;
+                },
+                isNum: function (value) {
+                    var reg = /\d+/;
+                    return reg.test(value);
+                },
+                isTel: function (value) {
+                    var reg = /^(\d{4})?\d{7}$/;
+                    return reg.test(value);
+                },
+                isPhone: function (value) {
+                    var reg = /^0?1[3|4|5|6|7|8]\d{9}$/;
+                    return reg.test(value);
+                },
+                isChar: function (value) {
+                    var reg = /^[A-Za-z]+$/;
+                    return reg.test(value);
+                },
+                minLen: function (value, len) {
+                    return value.length >= len
+                },
+                maxLen: function (value, len) {
+                    return value.length <= len
+                },
+                isCN: function () {
+                    var reg = /^[\u4e00-\u9fa5]{0,}$/;
+                    return
+                }
+            },
+            setGlobeMsgs = function (msgs) {
+                validateMsgs = Object.assign(msgs, validateMsgs);
+            },
+            validate = function () {
+                this.status = true;
+                this.arr = [];
+                this.msg = '';
+            };
+        validate.prototype.init = function () {
+            this.status = true;
+            this.arr = [];
+            this.msg = '';
+            return this;
+        }
+        validate.prototype.and = function (type, msg) {
+            this.vOr();
+            if (this.status) {
+                var d = [].slice.call(arguments, 2);
+                this.status = validateTypes[type] && validateTypes[type].apply(this, d);
+                !this.status && (this.msg = msg || validateMsgs[type] || "")
+            }
+            return this
+        }
+        validate.prototype.or = function (type, msg) {
+            if (this.status) {
+                var d = [].slice.call(arguments, 2);
+                var status = validateTypes[type] && validateTypes[type].apply(this, d);
+                !status && (msg = msg || validateMsgs[type] || "");
+                this.arr.push({
+                    status: status,
+                    msg: msg
+                })
+            }
+            return this
+        }
+        validate.prototype.vOr = function () {
+            for (var i = 0; i < this.arr.length; i++) {
+                this.status = this.arr[i].status;
+                !this.status && (!this.msg ? (this.msg = [this.arr[i].msg]) : this.msg.push(this.arr[i].msg));
+                if (this.status) {
+                    break;
+                }
+            }
+            this.arr = [];
+        }
+        validate.prototype.result = function () {
+            this.vOr();
+            return {
+                status: this.status,
+                msg: this.msg
+            }
+        }
+
+        var V = new validate();
+
+        document.getElementById('input').onchange = function () {
+            var value = this.value;
+            V.init().and("noEmpty", "不能空", value).or("isTel", "电话号不合法", value).or("isPhone", "手机号不合法", value);
+            console.log(V.result())
+        }
+    </script>
+</body>
+
+</html>

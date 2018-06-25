@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>event</title>
+    <style>
+        #div1 {
+            width: 200px;
+            height: 200px;
+            background: green;
+        }
+
+        .div2 {
+            width: 100px;
+            height: 100px;
+            background: #fff;
+        }
+
+        p {
+            background: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        function delegation(ele, className, callback, event) {
+            function addEvent() {
+                var events = [];
+                if (events[event]) {
+                    events[event].push({
+                        className: className,
+                        callback: callback,
+                        type: event
+                    })
+                } else {
+                    events[event] = [{
+                        className: className,
+                        callback: callback,
+                        type: event
+                    }];
+                    (ele || document.body).addEventListener(event || 'click', function (e) {
+                        var targetInfo = bubble(e);
+                        events[event].forEach(function (item) {
+                            var key = item.type + "_" + item.className;
+                            if (e.target[key]) {
+                                e.target[key]();
+                            } else {
+                                execute(e, item, targetInfo, function (info) {
+                                    var eventKey = info.type + "_" + info.className;
+                                    e.target[eventKey] = info.callback
+                                });
+                            }
+                        });
+                    }, false)
+                }
+            }
+
+            function execute(e, selector, targetInfo, callback) {
+                var temp = 0,
+                    _this = undefined;
+                for (var i = targetInfo.length - 1; i > -1; i--) {
+                    if (targetInfo[i].class.indexOf(selector.className) > -1) {
+                        temp++;
+                        if (!_this) {
+                            _this = targetInfo[i].HTMLObject;
+                        }
+                        selector.callback.call(_this, e);
+                        callback && callback.call(_this, targetInfo[i]);
+                        break;
+                    }
+                }
+            }
+
+            function bubble(e) {
+                var targetInfo = [];
+                var target = e.target;
+                while (target.tagName !== "HTML") {
+                    targetInfo.push({
+                        "class": target.className.split(/\s+/),
+                        "HTMLObject": target
+                    });
+                    target = target.parentNode;
+                }
+                return targetInfo;
+            }
+            addEvent();
+        }
+        delegation(document.body, "div123", function () {
+            console.log(this, event)
+        });
+    </script>
+    <div id="div1">
+        <div class="div2 div123">
+            <p>123132</p>
+        </div>
+    </div>
+</body>
+
+</html>
