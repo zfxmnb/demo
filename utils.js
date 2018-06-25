@@ -149,6 +149,8 @@ const utils = {
             }
         }
     },
+
+    //jsonp 方法
     jsonp(config, callback) {
         let script = document.createElement('script'),
             jsoncallback = `JSONP_${new Date().getTime()}`,
@@ -166,6 +168,7 @@ const utils = {
         }
         document.body.appendChild(script);
     },
+
     //深度克隆
     deepClone(cloneObj) {
         const OType = (o) => {
@@ -194,6 +197,7 @@ const utils = {
             }
         return clone(cloneObj);
     },
+
     //通过scheme方式打开app
     openApp(scheme, callback) {
         if (location.protocol !== "https:") {
@@ -223,6 +227,7 @@ const utils = {
             location.href = 'http://img.xmiles.cn/scheme_redirect.html?v=0.1&scheme='+scheme;
         }
     },
+
     //获取cookie
     getCookie(name) {
         if(name){
@@ -238,6 +243,7 @@ const utils = {
             return cookies;
         }
     },
+
     //设置cookie
     setCookie(key, value, other) {
         var str = key + "=" + value + ";";
@@ -253,6 +259,7 @@ const utils = {
         }
         document.cookie = str;
     },
+
     //随机字符串
     generateMixed(n, cap) {
         var chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
@@ -266,6 +273,7 @@ const utils = {
         }
         return res;
     },
+
     //序列化    
     serialization(obj) {
         var str = "";
@@ -278,6 +286,7 @@ const utils = {
         }
         return str.slice(0, -1);
     },
+
     //反序列化  
     structuration(str) {
         var obj = {};
@@ -289,6 +298,8 @@ const utils = {
         }
         return obj;
     },
+    
+    //base64 data transform to Blob object
     toBlob(base64) {
         var arr = base64.split(','),
             mime = arr[0].match(/:(.*);/)[1],
@@ -303,6 +314,7 @@ const utils = {
         });
         return window.URL.createObjectURL(blob);
     },
+
     //原生ajax请求
     // ajax("http://fanxz.cn/login","post","username=zfxmnb&password=123453424&type=login",function(data){
     //     console.log(data);
@@ -337,12 +349,18 @@ const utils = {
             }
         }
     },
+
+    //utf-16 to utf-8
     utf16to8(string) {
         unescape(encodeURIComponent(string))
     },
+
+    //utf-8 to utf-16
     utf8to16(string) {
         decodeURIComponent(escape(string))
     },
+
+    //获取渲染完样式
     getCurrStyle(element, Prop) {
         var computedStyle = element.currentStyle ? element.currentStyle : window.getComputedStyle(element, null);
         return computedStyle.getPropertyValue ? computedStyle.getPropertyValue(Prop) : computedStyle[Prop];
