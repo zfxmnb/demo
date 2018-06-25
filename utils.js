@@ -360,7 +360,7 @@ const utils = {
         decodeURIComponent(escape(string))
     },
 
-    //获取渲染完样式
+    //获取渲染完样式123
     getCurrStyle(element, Prop) {
         var computedStyle = element.currentStyle ? element.currentStyle : window.getComputedStyle(element, null);
         return computedStyle.getPropertyValue ? computedStyle.getPropertyValue(Prop) : computedStyle[Prop];
