@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>performance</title>
+</head>
+
+<body>
+    <script>
+        function gettimelist() {
+            var timing = [];
+            for (var key in window.performance.timing) {
+                if (window.performance.timing[key] && !isNaN(window.performance.timing[key])) {
+                    var t = new Date(window.performance.timing[key]);
+                    var o = {
+                        time: window.performance.timing[key],
+                        _time: t.getMinutes() + "m " + t.getSeconds() + "s " + t.getTime() % 1000 + "ms",
+                        key: key
+                    };
+                    timing.push(o);
+                }
+            }
+            timing.sort(function (a, b) {
+                return a.time - b.time
+            });
+            console.log(timing);
+        }
+
+        function gettimes() {
+            var timing = performance.timing;
+            var redirectTime = timing.redirectEnd - timing.redirectStart;
+            var appcacheTime = timing.domainLookupStart - timing.fetchStart;
+            var lookupDomainTime = timing.domainLookupEnd - timing.domainLookupStart;
+            var connectTime = timing.connectEnd - timing.connectStart;
+            var requestTime = timing.responseEnd - timing.requestStart;
+            var unloadEventTime = timing.unloadEventEnd - timing.unloadEventStart;
+            var initDomTreeTime = timing.domInteractive - timing.responseEnd;
+            var domReadyTime = timing.domComplete - timing.domInteractive; //过早获取时,domComplete有时会是0
+            var readyEventTime = timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart;
+            var loadEventTime = timing.loadEventEnd - timing.loadEventStart;
+            var loadTime = timing.loadEventEnd - timing.navigationStart; //过早获取时,loadEventEnd有时会是0
+            console.log('--------------------');
+            console.log('重定向耗时: 【' + redirectTime + '】   没有重定向为0');
+            console.log('读取缓存耗时: 【' + appcacheTime + '】   读取页面缓存');
+            console.log('DNS查询耗时: 【' + lookupDomainTime  + '】   首次查询耗时较长');
+            console.log('TCP连接耗时: 【' + connectTime  + '】   三次握手');
+            console.log('页面请求耗时: 【' + requestTime  + '】   发起请求到下载完成');
+            console.log('卸载前页耗时: 【' + unloadEventTime  + '】  卸载前一个页面，通常为下载完后异步进行');
+            console.log('解析DOM树耗时: 【' + initDomTreeTime  + '】   解析dom,通常会受到css、js加载执行影响');
+            console.log('页面加载耗时: 【' + domReadyTime  + '】   dom渲染完成后加载剩余资源');
+            console.log('ready事件耗时: 【' + loadEventTime  + '】   解析DOM树后马上执行');
+            console.log('load事件耗时: 【' + loadEventTime  + '】   资源都加载完成后立即执行');
+            console.log('--------------------');
+            console.log('从开始至load总耗时: ' + loadTime);
+        }
+    </script>
+</body>
+
+</html>

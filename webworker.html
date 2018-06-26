@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <button id="nowebworker">非worker</button>
+    <button id="webworker">worker</button>
+    <script>
+        var count = 10,calcCount = 30;
+        function calculator(n){
+            //console.log(n)
+            return n > 1 ? calculator(n - 1) + calculator(n - 2) : 1;
+        }
+        function nowebworker(){
+            var alltime = new Date().getTime();
+            var i=0;
+            while(i<count){
+                var time = new Date().getTime();
+                calculator(calcCount);
+                console.log("calculator"+i+":"+(new Date().getTime()-time))
+                i++;
+            }
+            console.log("all:"+(new Date().getTime()-alltime))
+        }
+        function webworker(){
+            var alltime = new Date().getTime();
+            var i=1,j=0,workers={};
+            var f = function (t){
+                j++
+                if(j>count-1){
+                    console.log("all:"+(new Date().getTime()-alltime))
+                    for(var key in workers){
+                        workers[key].terminate()
+                    }
+                }
+            }
+            while(i<count-1){
+                workers['worker'+i] = new Worker("webworker.js");
+                workers['worker'+i].onmessage=function(event){
+                    if(event.data){
+                        f();
+                    }
+                }
+                i++;
+            }
+            var time = new Date().getTime();
+            calculator(calcCount);
+            console.log("calculator0:"+(new Date().getTime()-time));
+            f();
+        }
+        document.querySelector("#nowebworker").onclick=nowebworker;
+        document.querySelector("#webworker").onclick=webworker;
+    </script>
+</body>
+</html>

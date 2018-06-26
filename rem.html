@@ -1,0 +1,34 @@
+<script>
+        var fontPixelRatio;
+        (function () {
+            var w = document.documentElement.offsetWidth > window.screen.width ? window.screen.width : document.documentElement
+                .offsetWidth,
+                remPx;
+            if (w < 540) {
+                remPx = w * 50 / 540;
+            } else {
+                remPx = 50;
+            }
+            document.documentElement.style.fontSize = remPx + "px";
+            if (!fontPixelRatio) {
+                var pxblock = document.createElement("div"),
+                    remblock = document.createElement("div");
+                document.body.appendChild(pxblock);
+                document.body.appendChild(remblock);
+                remblock.style.position = pxblock.style.position = "fixed";
+                remblock.style.to = pxblock.style.top = "-1000px";
+                pxblock.style.height = remPx + "px";
+                remblock.style.height = "1rem";
+                var pxblockRect = pxblock.getBoundingClientRect(),
+                    remblockRect = remblock.getBoundingClientRect(),
+                    pxHeight = pxblockRect.height || pxblockRect.bottom - pxblockRect.top,
+                    remHeight = remblockRect.height || remblockRect.bottom - remblockRect.top;
+                fontPixelRatio = pxHeight / remHeight;
+                pxblock.remove();
+                remblock.remove();
+            }
+            document.documentElement.style.fontSize = remPx * fontPixelRatio + "px";
+            window.removeEventListener("resize", arguments.callee, false);
+            window.addEventListener("resize", arguments.callee, false);
+        })();
+    </script>

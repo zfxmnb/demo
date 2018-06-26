@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>unload</title>
+</head>
+<body>
+    <script>
+        var startTime = new Date().getTime(), first = 1;
+        window.onunload = function(){
+            console.log(new Date().getTime() - startTime)
+        }
+        window.onbeforeunload = function(event){
+            if(first){
+                first = 0;
+                event.returnValue = "是否关闭当前页面";
+                return event.returnValue
+            }
+        }
+    </script>
+</body>
+</html>
