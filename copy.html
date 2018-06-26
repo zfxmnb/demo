@@ -12,18 +12,12 @@
             height:1000%;
             position: absolute;
         }
-        div{
-            width:200px;
-            height:200px;
-            background:#fff;
-        }
     </style>
 </head>
 <body>
-    <div id="test"></div>
     <script>
         function Webcopy(){
-            var input = document.createElement("input");
+            var input = document.createElement("input"), callback;
             var styles = {
                 position:"fixed",
                 border: 'none',
@@ -36,16 +30,16 @@
                 input.style[key] = styles[key];
             }
             document.body.appendChild(input);
-            input.onfocus = function(event){
-                event.preventDefault();
-            }
-            var action = function(callback){
+            // input.onfocus = function(event){
+            //     event.preventDefault();
+            // }
+            var action = function(){
                 if(input.value){
                     input.focus();
                     input.setSelectionRange(0, input.value.length);
                     var copied = document.execCommand('Copy');
                     if(copied){
-                        callback && callback();
+                        callback && callback(input.value);
                     }
                     input.blur();
                 }
@@ -53,14 +47,17 @@
             document.body.addEventListener('click', function(event){
                 action();
             }, true);
-            return function(string, callback){
+            return function(string, fn){
                 input.value = string;
-                action(callback);
+                callback = fn
+                action();
             }
         }
 
         var webcopy = new Webcopy();
-        webcopy('zengfanxing');
+        webcopy('zengfanxing', function(str){
+            alert(str);
+        });
     </script>
 </body>
 </html>
