@@ -1,63 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>copy</title>
-    <style>
-        body{
-            background:#ccc;
-            width:100%;
-            height:1000%;
-            position: absolute;
-        }
-    </style>
 </head>
+
 <body>
+    <div id="demodiv">
+        test
+    </div>
     <script>
-        function Webcopy(){
-            var input = document.createElement("input"), callback;
-            var styles = {
-                position:"fixed",
-                border: 'none',
-                top:0,
-                height: 0,
-                margin: 0,
-                padding: 0
-            }
-            for(var key in styles){
+        //string:copy String; ele:target||target.id;
+        function webcopy(string, ele, callback) {
+            var input = document.createElement("input"),
+                styles = {
+                    position: "fixed",
+                    border: 'none',
+                    opacity: 0.01,
+                    top: '-1px',
+                    height: '1px',
+                    margin: 0,
+                    padding: 0
+                },
+                htmlStyle = {
+                    cursor: "pointer",
+                    webkitTapHighlightColor: "rgba(0,0,0,0)",
+                    webkitTapHighlightColor: "transparent"
+                };
+            input.readOnly = 'readOnly';
+            input.value = string;
+            for (var key in styles) {
                 input.style[key] = styles[key];
             }
+            for (var key in htmlStyle) {
+                document.documentElement.style[key] = htmlStyle[key];
+            }
             document.body.appendChild(input);
-            // input.onfocus = function(event){
-            //     event.preventDefault();
-            // }
-            var action = function(){
-                if(input.value){
+            var action = function () {
+                if (input.value) {
                     input.focus();
                     input.setSelectionRange(0, input.value.length);
                     var copied = document.execCommand('Copy');
-                    if(copied){
+                    input.blur();
+                    if (copied) {
                         callback && callback(input.value);
                     }
-                    input.blur();
                 }
             }
-            document.body.addEventListener('click', function(event){
-                action();
+            document.documentElement.addEventListener('click', function (event) {
+                if (!!ele) {
+                    var target = event.target;
+                    while (target.tagName !== "HTML") {
+                        if (target.id === ele || target === ele) {
+                            action();
+                            break;
+                        }
+                        target = target.parentNode;
+                    }
+                } else {
+                    action();
+                }
             }, true);
-            return function(string, fn){
-                input.value = string;
-                callback = fn
-                action();
-            }
         }
+        webcopy('zeng', '', function (str) {
+            console.log(str)
+            document.title = str;
+        });
 
-        var webcopy = new Webcopy();
-        webcopy('zengfanxing', function(str){
-            alert(str);
+        webcopy('zengfanxing', document.getElementById('demodiv'), function (str) {
+            console.log(str)
+            document.title = str;
         });
     </script>
 </body>
+
 </html>
