@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>canvas</title>
+    <style>
+        canvas {
+            width: 500px;
+            height: 400px;
+            border:1px solid;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        var configs = {
+            styles: {
+                width: 500,
+                height: 400,
+                main: {
+                    width: 100,
+                    height: 100,
+                    top: 60,
+                    left: 60,
+                    borderRadius: 5,
+                    borderWidth: 5,
+                    borderColor: "#ddd",
+                    scaleX: 1.8,
+                    scaleY: 1.2,
+                    rotate: 45,
+                },
+                bg1: {
+                    backgroundColor: "#eee",
+                    backgroundImage: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png"
+                },
+                main2: {
+                    width: 120,
+                    height: 120,
+                    bottom: 0,
+                    right: 0,
+                    borderRadius: 15,
+                    borderWidth: 5,
+                    borderColor: "red",
+                    backgroundColor: 'rgba(255,255,0,1)',
+                    color: "red",
+                    fontSize: 30,
+                    rotate: 80,
+                    scaleX: 1,
+                    scaleY: 1,
+                    textAlign: "center"
+                },
+                main3: {
+                    width: 60,
+                    height: 60,
+                    bottom: 0,
+                    right: 0,
+                    borderRadius: 5,
+                    borderWidth: 3,
+                    borderColor: "#000",
+                    backgroundColor: 'rgba(255,255,0,1)',
+                    color: "green",
+                    fontSize: 24,
+                    rotate: -45,
+                    scaleX: 1,
+                    scaleY: 1,
+                    textAlign: "center"
+                },
+                bg2: {
+                    backgroundImage: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png"
+                }
+            },
+            elements: [{
+                    type: "View",
+                    id: "main",
+                    class: ['main', "bg1"],
+                    content: "test123"
+                },
+                {
+                    type: "View",
+                    id: "main2",
+                    class: ['main2', "bg2"],
+                    content: "我的"
+                },
+                {
+                    type: "View",
+                    id: "main3",
+                    class: ['main3', "bg2"],
+                    content: "div3"
+                }
+            ],
+            events: {
+                "main": [{
+                    evnetType: "click",
+                    callback: function (event) {
+
+                    }
+                }]
+            }
+        }
+        //圆角矩形
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+            var min_size = Math.min(w, h);
+            if (r > min_size / 2) r = min_size / 2;
+            // 开始绘制
+            this.beginPath();
+            this.moveTo(x + r, y);
+            this.arcTo(x + w, y, x + w, y + h, r);
+            this.arcTo(x + w, y + h, x, y + h, r);
+            this.arcTo(x, y + h, x, y, r);
+            this.arcTo(x, y, x + w, y, r);
+            this.closePath();
+            return this;
+        }
+
+        function canvasInit(configs) {
+            this.configs = configs;
+            this.objects = [];
+            this.canvas = document.getElementById("canvas");
+            this.ctx = canvas.getContext("2d");
+            this.canvas.width = configs.styles.width;
+            this.canvas.height = configs.styles.height;
+        }
+
+        canvasInit.prototype.init = function () {
+            this.configs.elements.forEach(function (element) {
+                var style = {};
+                element.class && element.class.forEach(function (item) {
+                    style = Object.assign(style, this.configs.styles[item])
+                })
+                var computedstyle = this.calculate(style);
+                var obj = {
+                    type: element.type,
+                    id: element.id,
+                    content: element.content,
+                    class: element.class,
+                    style: style,
+                    computed: computedstyle,
+                    event: this.configs.events[element.id]
+                }
+                this.objects.push(obj)
+            }.bind(this));
+            this.draw();
+        }
+
+        canvasInit.prototype.draw = function () {
+            if (this.drawing) {
+                this.needDraw = true;
+                return
+            }
+            this.drawing = true;
+            this.needDraw = false;
+            this.ctx.clearRect(0, 0, this.configs.styles.width, this.configs.styles.height);
+            var i = 0;
+            this.render(i, function () {
+                setTimeout(()=>{
+                    //this.drawing = false;
+                    if (this.needDraw) {
+                        this.draw();
+                    }
+                },300)
+            }.bind(this));
+        }
+
+        canvasInit.prototype.render = function (i, callback) {
+            if (i === this.objects.length) {
+                callback && callback();
+                return;
+            }
+            var obj = this.objects[i];
+            var computed = obj.computed;
+            this.transform(computed, function () {
+                var pattern = this.getbackgroundImg(computed.backgroundImage, computed.backgroundColor);
+                this.rect(computed.offsetX, computed.offsetY, computed.offsetWidth, computed.offsetHeight,
+                    computed.borderRadius)
+                this.ctx.lineWidth = computed.borderWidth;
+                this.ctx.strokeStyle = computed.borderColor;
+                this.ctx.stroke();
+                this.rect(computed.x, computed.y, computed.width, computed.height, computed.borderRadius)
+                this.ctx.lineWidth = 0;
+                this.ctx.strokeStyle = 'rgba(255,255,255,0)';
+                this.ctx.stroke();
+                this.ctx.fillStyle = pattern;
+                this.ctx.fill();
+                this.renderText(obj.content, computed);
+            }.bind(this), function () {
+                i++;
+                this.render(i, callback);
+            }.bind(this))
+        }
+
+        canvasInit.prototype.rect = function (x, y, width, height, radius) {
+            radius ?
+                this.ctx.roundRect(x, y, width, height, radius) :
+                this.ctx.rect(x, y, width, height);
+        }
+
+        canvasInit.prototype.getbackgroundImg = function (img, bgcolor) {
+            if (img && img.loaded) {
+                return this.ctx.createPattern(img, "no-repeat");
+            } else {
+                return bgcolor
+            }
+        }
+
+        canvasInit.prototype.renderText = function (text, computed) {
+            if (text) {
+                this.ctx.textAlign = computed.textAlign;
+                this.ctx.textBaseline = computed.verticalAlign;
+                this.ctx.font = computed.font;
+                this.ctx.fillStyle = computed.fontColor;
+                var start = computed.x;
+                if (computed.textAlign === "right") {
+                    start = computed.x + computed.width;
+                } else if (computed.textAlign === "center") {
+                    start = computed.x + (computed.width) / 2;
+                }
+                this.ctx.fillText(text, start, computed.y);
+            }
+        }
+
+        canvasInit.prototype.transform = function (computed, callback, complete) {
+            if (computed.rotate || computed.scaleX != 1 || computed.scaleY != 1) {
+                var x = computed.x + (computed.width) / 2,
+                    y = computed.y + (computed.height) / 2;
+                this.ctx.translate(x, y); //将绘图原点移到画布中点
+                this.ctx.rotate((Math.PI / 180) * computed.rotate); //旋转角度
+                this.ctx.scale(computed.scaleX, computed.scaleY);
+                this.ctx.translate(-x, -y); //将画布原点移动
+                callback && callback();
+                //类似过程返回正常角度
+                this.ctx.translate(x, y);
+                this.ctx.scale(1 / computed.scaleX, 1 / computed.scaleY);
+                this.ctx.rotate((Math.PI / 180) * -computed.rotate);
+                this.ctx.translate(-x, -x);
+                complete && complete();
+            } else {
+                callback && callback();
+                complete && complete();
+            }
+        }
+
+        canvasInit.prototype.loadImage = function (src) {
+            var img = new Image();
+            img.src = src;
+            img.onload = function () {
+                img.loaded = true;
+                if(this.drawing){
+                    this.needDraw = true;
+                }else{
+                    setTimeout(()=>{
+                        this.draw();
+                    },30)
+                }
+            }.bind(this)
+            return img;
+        }
+
+        canvasInit.prototype.getPosition = function (style) {
+            var borderWidth = style.borderWidth || 0,
+                width = style.width || 0,
+                height = style.height || 0,
+                offsetWidth = width + borderWidth,
+                offsetHeight = height + borderWidth,
+                offsetX = (style.left || 0) + borderWidth / 2,
+                offsetY = (style.top || 0) + borderWidth / 2,
+                x = offsetX + borderWidth / 2,
+                y = offsetY + borderWidth / 2;
+            if (style.right !== undefined) {
+                offsetX = this.configs.styles.width - offsetWidth - (style.right || 0) - borderWidth;
+                x = offsetX + borderWidth / 2;
+            }
+            if (style.bottom !== undefined) {
+                offsetY = this.configs.styles.height - offsetHeight - (style.bottom || 0) - borderWidth;
+                y = offsetY + borderWidth / 2;
+            }
+            return {
+                width: width,
+                height: height,
+                x: x,
+                y: y,
+                offsetWidth: offsetWidth,
+                offsetHeight: offsetHeight,
+                offsetX: offsetX,
+                offsetY: offsetY
+            }
+        }
+
+        canvasInit.prototype.calculate = function (style) {
+            var posObj = this.getPosition(style);
+            var computedstyle = {
+                width: posObj.width,
+                height: posObj.height,
+                offsetWidth: posObj.offsetWidth,
+                offsetHeight: posObj.offsetHeight,
+                x: posObj.x,
+                y: posObj.y,
+                offsetX: posObj.offsetX,
+                offsetY: posObj.offsetY,
+                font: (style.fontStyle || 'normal') + " normal " + (style.fontWeight || 'normal') + " " + (
+                    style.fontSize ? style.fontSize + "px" : '14px') + " " + (style.fontFamily || 'Arial'),
+                fontColor: style.color || "#000",
+                textAlign: style.textAlign || "left",
+                verticalAlign: style.verticalAlign || "top",
+                borderWidth: style.borderWidth || 0,
+                borderColor: style.borderColor || '#000',
+                borderRadius: style.borderRadius || 0,
+                backgroundColor: style.backgroundColor || 'rgba(255,255,255,1)',
+                backgroundImage: style.backgroundImage && this.loadImage(style.backgroundImage),
+                rotate: style.rotate || 0,
+                scaleX: style.scaleX || 1,
+                scaleY: style.scaleY || 1,
+            };
+            console.log(computedstyle);
+            return computedstyle
+        }
+
+        new canvasInit(configs).init();
+    </script>
+</body>
+
+</html>

@@ -224,19 +224,20 @@ const utils = {
                 callback && callback(false)
             }
         } else {
-            location.href = 'http://img.xmiles.cn/scheme_redirect.html?v=0.1&scheme='+scheme;
+            location.href = 'http://img.xmiles.cn/scheme_redirect.html?v=0.1&scheme=' + scheme;
         }
     },
 
     //获取cookie
     getCookie(name) {
-        if(name){
+        if (name) {
             var regExp = new RegExp(name + "=([^=]*)(;|$)", "g");
             var arr = regExp.exec(document.cookie)
             return arr && arr[1];
-        }else{
-            var arr = document.cookie.split(/\s*\;\s*/), cookies = {};
-            for(var i=0; i < arr.length; i++){
+        } else {
+            var arr = document.cookie.split(/\s*\;\s*/),
+                cookies = {};
+            for (var i = 0; i < arr.length; i++) {
                 cookie = arr[i].split(/\s*\=\s*/);
                 cookies[cookie[0]] = cookie[1];
             }
@@ -298,7 +299,7 @@ const utils = {
         }
         return obj;
     },
-    
+
     //base64 data transform to Blob object
     toBlob(base64) {
         var arr = base64.split(','),
@@ -364,6 +365,24 @@ const utils = {
     getCurrStyle(element, Prop) {
         var computedStyle = element.currentStyle ? element.currentStyle : window.getComputedStyle(element, null);
         return computedStyle.getPropertyValue ? computedStyle.getPropertyValue(Prop) : computedStyle[Prop];
+    },
+    //获取移动缩放比
+    detectZoom() {
+        var ratio = 1,
+            screen = window.screen,
+            ua = navigator.userAgent.toLowerCase();    
+        if (window.devicePixelRatio !== undefined) {      
+            ratio = window.devicePixelRatio;  
+        }  
+        else if (~ua.indexOf('msie')) {     
+            if (screen.deviceXDPI && screen.logicalXDPI) {      
+                ratio = screen.deviceXDPI / screen.logicalXDPI;    
+            }  
+        }  
+        else if (window.outerWidth !== undefined && window.innerWidth !== undefined) {    
+            ratio = window.outerWidth / window.innerWidth;  
+        }
+        return ratio;
     }
 };
 
