@@ -8,9 +8,9 @@
     <title>canvas</title>
     <style>
         canvas {
-            width: 500px;
-            height: 400px;
-            border:1px solid;
+            width: 250px;
+            height: 200px;
+            border: 1px solid;
         }
     </style>
 </head>
@@ -30,9 +30,9 @@
                     borderRadius: 5,
                     borderWidth: 5,
                     borderColor: "#ddd",
-                    scaleX: 1.8,
-                    scaleY: 1.2,
-                    rotate: 45,
+                    scaleX: 1,
+                    scaleY: 1,
+                    rotate: -45,
                 },
                 bg1: {
                     backgroundColor: "#eee",
@@ -41,15 +41,15 @@
                 main2: {
                     width: 120,
                     height: 120,
-                    bottom: 0,
-                    right: 0,
+                    bottom: 50,
+                    right: 50,
                     borderRadius: 15,
                     borderWidth: 5,
                     borderColor: "red",
                     backgroundColor: 'rgba(255,255,0,1)',
                     color: "red",
                     fontSize: 30,
-                    rotate: 80,
+                    rotate: -45,
                     scaleX: 1,
                     scaleY: 1,
                     textAlign: "center"
@@ -57,15 +57,15 @@
                 main3: {
                     width: 60,
                     height: 60,
-                    bottom: 0,
-                    right: 0,
+                    bottom: 20,
+                    right: 20,
                     borderRadius: 5,
                     borderWidth: 3,
                     borderColor: "#000",
                     backgroundColor: 'rgba(255,255,0,1)',
                     color: "green",
                     fontSize: 24,
-                    rotate: -45,
+                    rotate: 45,
                     scaleX: 1,
                     scaleY: 1,
                     textAlign: "center"
@@ -157,12 +157,12 @@
             this.ctx.clearRect(0, 0, this.configs.styles.width, this.configs.styles.height);
             var i = 0;
             this.render(i, function () {
-                setTimeout(()=>{
+                setTimeout(() => {
                     //this.drawing = false;
                     if (this.needDraw) {
                         this.draw();
                     }
-                },300)
+                }, 300)
             }.bind(this));
         }
 
@@ -187,6 +187,7 @@
                 this.ctx.fillStyle = pattern;
                 this.ctx.fill();
                 this.renderText(obj.content, computed);
+                //console.log(computed.x, computed.y)
             }.bind(this), function () {
                 i++;
                 this.render(i, callback);
@@ -236,7 +237,7 @@
                 this.ctx.translate(x, y);
                 this.ctx.scale(1 / computed.scaleX, 1 / computed.scaleY);
                 this.ctx.rotate((Math.PI / 180) * -computed.rotate);
-                this.ctx.translate(-x, -x);
+                this.ctx.translate(-x, -y);
                 complete && complete();
             } else {
                 callback && callback();
@@ -249,12 +250,12 @@
             img.src = src;
             img.onload = function () {
                 img.loaded = true;
-                if(this.drawing){
+                if (this.drawing) {
                     this.needDraw = true;
-                }else{
-                    setTimeout(()=>{
+                } else {
+                    setTimeout(() => {
                         this.draw();
-                    },30)
+                    }, 30)
                 }
             }.bind(this)
             return img;
@@ -315,10 +316,32 @@
                 scaleX: style.scaleX || 1,
                 scaleY: style.scaleY || 1,
             };
-            console.log(computedstyle);
             return computedstyle
         }
 
+
+        canvasInit.prototype.Event = function () {
+
+        }
+
+        canvasInit.prototype.coordinate = function (computed, x, y) {
+            var cx = computed.x,
+                cy = computed.y,
+                rotate = computed.rotate,
+                maxX = computed.offsetX + computed.offsetWidth,
+                minX = computed.offsetX,
+                maxY = computed.offsetY + computed.offsetHeight,
+                minY = computed.offsetY;
+            var k = Math.sqrt(Math.pow(x - cx, 2) + Math.pow(y - cy, 2)),
+                angle = Math.atan((y - cy) / (x - cx)) - (rotate * Math.PI / 180),
+                x1 = k * Math.sin(angle) / computed.scaleX,
+                y1 = k * Math.cos(angle) / computed.scaleX;
+            if (x1 <= maxX && x1 >= minX && y1 <= maxY && y1 >= minY) {
+                return true
+            } else {
+                false
+            }
+        }
         new canvasInit(configs).init();
     </script>
 </body>
