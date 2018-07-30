@@ -10,6 +10,7 @@
         canvas {
             width: 250px;
             height: 200px;
+            margin: 20px;
             border: 1px solid;
         }
     </style>
@@ -32,32 +33,33 @@
                     borderColor: "#ddd",
                     scaleX: 1,
                     scaleY: 1,
-                    rotate: -45,
+                    rotate: -60,
+                    zIndex: 1
                 },
                 bg1: {
                     backgroundColor: "#eee",
                     backgroundImage: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png"
                 },
                 main2: {
-                    width: 120,
-                    height: 120,
                     bottom: 50,
                     right: 50,
+                    width: 200,
+                    //height:200,
                     borderRadius: 15,
-                    borderWidth: 5,
+                    borderWidth: 1,
                     borderColor: "red",
                     backgroundColor: 'rgba(255,255,0,1)',
                     color: "red",
                     fontSize: 30,
-                    rotate: -45,
+                    rotate: 0,
                     scaleX: 1,
                     scaleY: 1,
-                    textAlign: "center"
+                    textAlign: "right"
                 },
                 main3: {
-                    width: 60,
-                    height: 60,
-                    bottom: 20,
+                    width: 160,
+                    height: 160,
+                    top: 20,
                     right: 20,
                     borderRadius: 5,
                     borderWidth: 3,
@@ -68,40 +70,85 @@
                     rotate: 45,
                     scaleX: 1,
                     scaleY: 1,
-                    textAlign: "center"
+                    textAlign: "center",
+                    zIndex: -1
                 },
                 bg2: {
                     backgroundImage: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png"
                 }
             },
             elements: [{
-                    type: "View",
+                    type: "div",
                     id: "main",
                     class: ['main', "bg1"],
                     content: "test123"
                 },
                 {
-                    type: "View",
-                    id: "main2",
-                    class: ['main2', "bg2"],
-                    content: "我的"
+                    type: "img",
+                    id: "img",
+                    src: "http://img.xmiles.cn/banner/2018_06/20180621171953_978_152955267578639.png",
+                    class: ['main2']
                 },
                 {
-                    type: "View",
-                    id: "main3",
+                    type: "text",
+                    id: "text",
                     class: ['main3', "bg2"],
-                    content: "div3"
-                }
+                    content: "text"
+                },
             ],
             events: {
                 "main": [{
                     evnetType: "click",
                     callback: function (event) {
-
+                        cvsele.setAnimation("main", {
+                            "rotate": 300,
+                            width: 150,
+                            height: 150
+                        }, 3000, {
+                            "loop": 0,
+                            "reversal": 1
+                        },function(){
+                            console.log("main animation end")
+                        })
                     }
-                }]
+                }, {
+                    evnetType: "touchstart",
+                    callback: function (event) {
+                        console.log(event)
+                    }
+                }],
+                "text": [{
+                    evnetType: "touchstart",
+                    callback: function (event) {
+                        console.log(event)
+                    }
+                }],
+                "img": [{
+                    evnetType: "touchend",
+                    callback: function (event) {
+                        cvsele.setAnimation("main2", {
+                            "rotate": -360,
+                        }, 1500, {
+                            "loop": 1
+                        })
+                    }
+                }],
             }
         }
+
+        window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame;
+        window.cancelAnimationFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame;
+
+        function canvasInit(configs) {
+            this.configs = configs;
+            this.objects = [];
+            this.canvas = document.getElementById("canvas");
+            this.ctx = canvas.getContext("2d");
+            this.canvas.width = configs.styles.width;
+            this.canvas.height = configs.styles.height;
+            this.animateEleCount = 0;
+        }
+
         //圆角矩形
         CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
             var min_size = Math.min(w, h);
@@ -117,37 +164,134 @@
             return this;
         }
 
-        function canvasInit(configs) {
-            this.configs = configs;
-            this.objects = [];
-            this.canvas = document.getElementById("canvas");
-            this.ctx = canvas.getContext("2d");
-            this.canvas.width = configs.styles.width;
-            this.canvas.height = configs.styles.height;
+        canvasInit.prototype.init = function () {
+            this.reflow()
+            this.repaint();
+            this.Event();
         }
 
-        canvasInit.prototype.init = function () {
+        canvasInit.prototype.reflow = function () {
+            this.objects = [];
             this.configs.elements.forEach(function (element) {
-                var style = {};
-                element.class && element.class.forEach(function (item) {
-                    style = Object.assign(style, this.configs.styles[item])
-                })
-                var computedstyle = this.calculate(style);
-                var obj = {
+                this.objects.push(this.flowCalc(element))
+            }.bind(this));
+            this.objects.sort(function (a, b) {
+                return a.computed.zIndex - b.computed.zIndex;
+            });
+        }
+
+        canvasInit.prototype.flowCalc = function (element, img) {
+            var style = {};
+            element.class && element.class.forEach(function (item) {
+                style = Object.assign(style, this.configs.styles[item])
+            });
+            var obj = element.computed ?
+                element : {
                     type: element.type,
                     id: element.id,
+                    src: element.src,
                     content: element.content,
                     class: element.class,
                     style: style,
-                    computed: computedstyle,
-                    event: this.configs.events[element.id]
+                    events: this.configs.events[element.id]
+                };
+            if (!img) {
+                img = this.loadImage(obj);
+                if (obj.src) {
+                    obj.style.display = "none";
                 }
-                this.objects.push(obj)
-            }.bind(this));
-            this.draw();
+            };
+            obj.computed = this.calculate(style, img);
+            return obj;
         }
 
-        canvasInit.prototype.draw = function () {
+        canvasInit.prototype.offset = function () {
+            let top = 0,
+                left = 0,
+                target = this.canvas;
+            top += target.offsetTop;
+            left += target.offsetLeft;
+            while (target.offsetParent) {
+                target = target.offsetParent;
+                top += target.offsetTop;
+                left += target.offsetLeft;
+            }
+            return {
+                top: top,
+                left: left
+            }
+        }
+
+        canvasInit.prototype.startAnimation = function () {
+            cancelAnimationFrame(this.frame);
+            this.frame();
+            requestAnimationFrame(this.frame.bind(this));
+        }
+
+        canvasInit.prototype.endAnimation = function () {
+            cancelAnimationFrame(this.frame);
+            console.log('cancelAnimationFrame');
+        }
+
+        canvasInit.prototype.frame = function () {
+            this.reflow();
+            requestAnimationFrame(this.frame.bind(this))
+        }
+
+        canvasInit.prototype.setAnimation = function (className, props, times, params, callback) {
+            var fp = Math.ceil(40 * (times / 1000)),
+                timeInterval = times / fp,
+                interval = {};
+            for (var key in props) {
+                interval[key] = {
+                    "k": (props[key] - (this.configs.styles[className][key] || 0)) / fp,
+                    "p": this.configs.styles[className][key]
+                };
+            }
+            var timeout = function (loop, reversal) {
+                var t = setInterval(function () {
+                        for (var key in props) {
+                            this.configs.styles[className][key] = (this.configs.styles[className][key] || 0) +
+                                interval[key].k;
+                        }
+                        c++;
+                        if (c >= fp) {
+                            clearInterval(t);
+                            if (reversal) {
+                                for (var key in interval) {
+                                    interval[key].k = -interval[key].k;
+                                }
+                                if (loop) {
+                                    timeout(loop, reversal);
+                                } else {
+                                    timeout(false, false);
+                                }
+                            } else {
+                                for (var key in props) {
+                                    this.configs.styles[className][key] = interval[key].p;
+                                }
+                                if (loop) {
+                                    timeout(loop);
+                                } else {
+                                    //结束
+                                    callback && callback();
+                                }
+                            }
+                            if (!loop && !reversal && !--this.animateEleCount) {
+                                this.endAnimation();
+                            }
+                        }
+                    }.bind(this), timeInterval),
+                    c = 0;
+                if (!this.animateEleCount) {
+                    this.startAnimation();
+                }
+            }.bind(this);
+            timeout(params.loop, params.reversal);
+            this.animateEleCount++;
+        }
+
+        canvasInit.prototype.repaint = function () {
             if (this.drawing) {
                 this.needDraw = true;
                 return
@@ -157,12 +301,10 @@
             this.ctx.clearRect(0, 0, this.configs.styles.width, this.configs.styles.height);
             var i = 0;
             this.render(i, function () {
-                setTimeout(() => {
-                    //this.drawing = false;
-                    if (this.needDraw) {
-                        this.draw();
-                    }
-                }, 300)
+                this.drawing = false;
+                if (this.needDraw) {
+                    this.repaint();
+                }
             }.bind(this));
         }
 
@@ -171,15 +313,22 @@
                 callback && callback();
                 return;
             }
-            var obj = this.objects[i];
-            var computed = obj.computed;
+            var obj = this.objects[i],
+                computed = obj.computed;
+            if (computed.display === "none") {
+                i++;
+                this.render(i, callback);
+                return
+            }
             this.transform(computed, function () {
-                var pattern = this.getbackgroundImg(computed.backgroundImage, computed.backgroundColor);
-                this.rect(computed.offsetX, computed.offsetY, computed.offsetWidth, computed.offsetHeight,
-                    computed.borderRadius)
-                this.ctx.lineWidth = computed.borderWidth;
-                this.ctx.strokeStyle = computed.borderColor;
-                this.ctx.stroke();
+                var pattern = this.getbackgroundImg(computed);
+                if (computed.borderWidth) {
+                    this.rect(computed.offsetX, computed.offsetY, computed.offsetWidth, computed.offsetHeight,
+                        computed.borderRadius)
+                    this.ctx.lineWidth = computed.borderWidth;
+                    this.ctx.strokeStyle = computed.borderColor;
+                    this.ctx.stroke();
+                }
                 this.rect(computed.x, computed.y, computed.width, computed.height, computed.borderRadius)
                 this.ctx.lineWidth = 0;
                 this.ctx.strokeStyle = 'rgba(255,255,255,0)';
@@ -187,7 +336,6 @@
                 this.ctx.fillStyle = pattern;
                 this.ctx.fill();
                 this.renderText(obj.content, computed);
-                //console.log(computed.x, computed.y)
             }.bind(this), function () {
                 i++;
                 this.render(i, callback);
@@ -200,11 +348,41 @@
                 this.ctx.rect(x, y, width, height);
         }
 
-        canvasInit.prototype.getbackgroundImg = function (img, bgcolor) {
+        canvasInit.prototype.getbackgroundImg = function (computed) {
+            let img = computed.backgroundImage
             if (img && img.loaded) {
-                return this.ctx.createPattern(img, "no-repeat");
+                return this.ctx.createPattern(this.imgDeal(img, computed.x, computed.y, computed.width, computed.height),
+                    "no-repeat");
             } else {
-                return bgcolor
+                return computed.backgroundColor
+            }
+        }
+
+        canvasInit.prototype.imgDeal = function (img, x, y, width, height) {
+            var imgCanvas = document.createElement('canvas'),
+                imgCtx = imgCanvas.getContext("2d"),
+                startX = x > 0 ? x : 0,
+                startY = y > 0 ? y : 0;
+            imgCanvas.width = width + startX;
+            imgCanvas.height = height + startY;
+            imgCtx.drawImage(img, startX, startY, width, height);
+            return imgCanvas
+        }
+
+        canvasInit.prototype.loadImage = function (obj) {
+            var src = obj.src || obj.style.backgroundImage;
+            if (src) {
+                var img = new Image();
+                img.src = src;
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    img.loaded = true;
+                    if (obj.src) {
+                        obj = this.flowCalc(obj, img);
+                    }
+                    this.repaint();
+                }.bind(this)
+                return img;
             }
         }
 
@@ -245,26 +423,19 @@
             }
         }
 
-        canvasInit.prototype.loadImage = function (src) {
-            var img = new Image();
-            img.src = src;
-            img.onload = function () {
-                img.loaded = true;
-                if (this.drawing) {
-                    this.needDraw = true;
-                } else {
-                    setTimeout(() => {
-                        this.draw();
-                    }, 30)
-                }
-            }.bind(this)
-            return img;
-        }
 
-        canvasInit.prototype.getPosition = function (style) {
+        canvasInit.prototype.getPosition = function (style, img) {
+            var width = style.width || img.width || 0,
+                height = style.height || img.height || 0;
+            if (img.loaded) {
+                if (style.width && !style.height) {
+                    height = style.width * (img.height / img.width)
+                }
+                if (style.height && !style.width) {
+                    width = style.height * (img.width / img.height)
+                }
+            }
             var borderWidth = style.borderWidth || 0,
-                width = style.width || 0,
-                height = style.height || 0,
                 offsetWidth = width + borderWidth,
                 offsetHeight = height + borderWidth,
                 offsetX = (style.left || 0) + borderWidth / 2,
@@ -291,9 +462,10 @@
             }
         }
 
-        canvasInit.prototype.calculate = function (style) {
-            var posObj = this.getPosition(style);
+        canvasInit.prototype.calculate = function (style, img) {
+            var posObj = this.getPosition(style, img);
             var computedstyle = {
+                display: style.display,
                 width: posObj.width,
                 height: posObj.height,
                 offsetWidth: posObj.offsetWidth,
@@ -311,38 +483,84 @@
                 borderColor: style.borderColor || '#000',
                 borderRadius: style.borderRadius || 0,
                 backgroundColor: style.backgroundColor || 'rgba(255,255,255,1)',
-                backgroundImage: style.backgroundImage && this.loadImage(style.backgroundImage),
+                backgroundImage: img,
                 rotate: style.rotate || 0,
                 scaleX: style.scaleX || 1,
                 scaleY: style.scaleY || 1,
+                zIndex: style.zIndex || 0
             };
             return computedstyle
         }
 
-
         canvasInit.prototype.Event = function () {
-
+            var events = [];
+            this.objects.forEach(function (obj) {
+                obj.events && obj.events.forEach(function (e) {
+                    if (events.indexOf(e.evnetType) === -1) {
+                        events.push(e.evnetType);
+                    }
+                }.bind(this))
+            }.bind(this))
+            events.forEach(function (event) {
+                (function () {
+                    var eventype = event;
+                    this.canvas.addEventListener(eventype, function (e) {
+                        if (!e.offsetX) {
+                            var canvasOffset = this.offset();
+                        }
+                        for (var i = this.objects.length - 1; i > -1; i--) {
+                            var obj = this.objects[i];
+                            var offsetX = e.offsetX || (e.changedTouches && e.changedTouches[0]
+                                    .pageX - canvasOffset.left) || 0,
+                                offsetY = e.offsetY || (e.changedTouches && e.changedTouches[0]
+                                    .pageY - canvasOffset.top) || 0,
+                                x = offsetX * (this.canvas.width / this.canvas.clientWidth),
+                                y = offsetY * (this.canvas.height / this.canvas.clientHeight);
+                            if (obj.events && obj.events.length) {
+                                var coordinate = this.coordinate(obj.computed, x, y);
+                                if (coordinate) {
+                                    obj.events && obj.events.forEach(function (item) {
+                                        if (item.evnetType === eventype) {
+                                            coordinate.event = eventype;
+                                            coordinate.target = obj;
+                                            coordinate.pageX = Math.round(offsetX);
+                                            coordinate.pageY = Math.round(offsetY);
+                                            item.callback.call(obj, coordinate);
+                                        }
+                                    })
+                                    if (!obj.propagation) {
+                                        break;
+                                    }
+                                }
+                            }
+                        };
+                    }.bind(this))
+                }.bind(this))()
+            }.bind(this))
         }
 
-        canvasInit.prototype.coordinate = function (computed, x, y) {
-            var cx = computed.x,
-                cy = computed.y,
-                rotate = computed.rotate,
+        canvasInit.prototype.coordinate = function (computed, X, Y) {
+            var cx = computed.x + computed.width / 2,
+                cy = computed.y + computed.height / 2,
                 maxX = computed.offsetX + computed.offsetWidth,
                 minX = computed.offsetX,
                 maxY = computed.offsetY + computed.offsetHeight,
                 minY = computed.offsetY;
-            var k = Math.sqrt(Math.pow(x - cx, 2) + Math.pow(y - cy, 2)),
-                angle = Math.atan((y - cy) / (x - cx)) - (rotate * Math.PI / 180),
-                x1 = k * Math.sin(angle) / computed.scaleX,
-                y1 = k * Math.cos(angle) / computed.scaleX;
-            if (x1 <= maxX && x1 >= minX && y1 <= maxY && y1 >= minY) {
-                return true
+            var k = Math.sqrt(Math.pow(X - cx, 2) + Math.pow(Y - cy, 2)),
+                angle = Math.atan2((Y - cy), (X - cx)) - (computed.rotate * Math.PI) / 180 - Math.PI / 2,
+                x = -(k * Math.sin(angle) / computed.scaleX) + cx,
+                y = k * Math.cos(angle) / computed.scaleX + cy;
+            if (x <= maxX && x >= minX && y <= maxY && y >= minY) {
+                return {
+                    "x": Math.round(x - minX),
+                    "y": Math.round(y - minY)
+                }
             } else {
                 false
             }
         }
-        new canvasInit(configs).init();
+        var cvsele = new canvasInit(configs)
+        cvsele.init();
     </script>
 </body>
 

@@ -369,8 +369,8 @@ const utils = {
     //获取移动缩放比
     detectZoom() {
         var ratio = 1,
-            screen = window.screen,
-            ua = navigator.userAgent.toLowerCase();    
+                screen = window.screen,
+                ua = navigator.userAgent.toLowerCase();    
         if (window.devicePixelRatio !== undefined) {      
             ratio = window.devicePixelRatio;  
         }  
@@ -383,6 +383,33 @@ const utils = {
             ratio = window.outerWidth / window.innerWidth;  
         }
         return ratio;
+    },
+    //定义事件
+    defineProperty(prop, obj) {
+        let object = obj || window;
+        delete object[prop];
+        let eventArray = [],
+            getter = function () {
+                let i = 0,
+                    f;
+                while (i < eventArray.length) {
+                    f = eventArray[i];
+                    f();
+                    i++;
+                }
+                return f
+            },
+            setter = function (f) {
+                eventArray.push(f);
+            };
+        Object.defineProperty(object, prop, {
+            get: function () {
+                return getter;
+            },
+            set: function (f) {
+                setter(f);
+            }
+        })
     }
 };
 
